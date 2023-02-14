@@ -19,10 +19,10 @@ app.use('/auth', authRoute);
 app.use('/news', newsRoute);
 
 app.listen(port, () => {
-    let sec = 0;
+    let min = 0;
     console.log(`Acessar http://localhost:${port}`);
     setInterval(() => {
-        sec = sec + 5;
-        console.log(`Servidor executando na porta ${port} || Segundos: ${sec} `);
-    }, 5000);
+        min = min + 1;
+        console.log(`Servidor executando na porta ${port} || Minutos: ${min} `);
+    }, 60000);
 });
