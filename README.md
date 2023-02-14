@@ -1,0 +1,1 @@
+Projeto BreakingNews feito como aprendizado através do canal Thi Code: https://www.youtube.com/@thicode.channel.
