@@ -1,4 +1,4 @@
-import { createService, findAllService, countNews, topNewsService, findByIdService, searchByTitleService } from '../services/news.service.js';
+import { createService, findAllService, countNews, topNewsService, findByIdService, searchByTitleService, byUserService, updateService, eraseService, likeNewsService, deleteLikeNewsService, addCommentService, deleteCommentService } from '../services/news.service.js';
 
 const create = async (req, res) => {
     try {
@@ -159,4 +159,140 @@ const searchByTitle = async (req, res) => {
     }
 }
 
-export default { create, findAll, topNews, findById, searchByTitle };
+const byUser = async (req, res) => {
+    try {
+        const id = req.userId;
+        const news = await byUserService(id);
+
+        return res.send({results: news.map((item) => ({
+            id: item._id,
+            title: item.title,
+            text: item.text,
+            banner: item.banner,
+            likes: item.likes,
+            comments: item.comments,
+            name: item.user.name,
+            userName: item.user.username,
+            userAvatar: item.user.avatar
+        })),
+    });
+
+    } catch (error) {
+        res.status(500).send({ message: error.message });
+    }
+};
+
+const update = async(req, res) => {
+    try {
+        const { title, text, banner } = req.body;
+        const { id } = req.params;
+
+        if (!title && !text && !banner) {
+            res.status(400).send({ message: 'Update at least one camp.' });
+        }
+
+        const news = await findByIdService(id);
+
+        if(news.user._id != req.userId){
+            return res.status(400).send({message: "You didn't create this post."});
+        }
+
+        await updateService(id, title, text, banner);
+
+        return res.send({message: 'Post successfully updated!'});
+
+    } catch (error) {
+        res.status(500).send({ message: error.message });
+    }
+};
+
+const erase = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const news = await findByIdService( id );
+
+        if(String(news.user.id) !== req.userId) {
+            return res.status(400).send({
+                message: "You can't delete this post." 
+            });
+        }
+
+        await eraseService(id);
+
+        return res.send({message: 'News deleted with sucess.'})
+        
+    } catch (error) {
+        res.status(500).send({ message: error.message });
+    };
+};
+
+const likeNews = async (req, res) => {
+
+    try {
+        const { id } = req.params;
+        const userId = req.userId;
+    
+        const newsLiked = await likeNewsService(id, userId);
+
+        if(!newsLiked){
+            await deleteLikeNewsService(id, userId);
+            return res.status(200).send({message: 'Like removed.'});
+        };
+    
+        res.send({message: 'Like done successfully.'});
+
+    } catch (error) {
+        res.status(500).send({ message: error.message });
+    }
+    
+};
+
+const addComment = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.userId;
+        const { comment } = req.body;
+    
+        if(!comment) {
+            return  res.status(400).send({ message: 'Write a message to comment.' });
+        }
+
+        await addCommentService(id, comment, userId);
+
+        res.send({message: 'Comment successfully completed!'});
+        
+    } catch (error) {
+        res.status(500).send({ message: error.message });
+    }
+};
+
+const removeComment = async (req, res) => {
+    try {
+
+        const { idNews, idComment } = req.params;
+
+        const userId = req.userId;
+
+        const commentDeleted = await deleteCommentService(idNews, idComment, userId);
+
+        const commentFinder = commentDeleted.comments.find( comment => comment.idComment === idComment );
+
+        if(!commentFinder){
+            return res.status(400).send( { message: 'Comment not found. ' } );
+        }
+
+        if(commentFinder.comments.userId !== userId){
+            return res.status(400).send({message: "You can't delete this comment."});
+        }
+
+        res.send({message: 'Comment removed.'});
+        
+    } catch (error) {
+
+        res.status(500).send( { message: error.message } );
+
+    }
+};
+
+export default { create, findAll, topNews, findById, searchByTitle, byUser, update, erase, likeNews, addComment, removeComment };

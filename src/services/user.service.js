@@ -10,14 +10,9 @@ const updateService = (id, name, username, email, password, avatar, background) 
     return User.findOneAndUpdate({_id: id}, {name, username, email, password, avatar, background});
 };
 
-const deleteUserById = (id) => {
-    return User.deleteOne({_id: id});
-};
-
 export default {
     createService,
     findAllService,
     findyByIdService,
-    updateService,
-    deleteUserById
+    updateService
 };
